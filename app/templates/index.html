@@ -1,0 +1,390 @@
+
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>AI Crop Yield Prediction System</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+
+</head>
+
+<body>
+
+<div class="page-wrapper">
+
+    <!-- ========================================= -->
+    <!-- INPUT + OUTPUT SECTION -->
+    <!-- ========================================= -->
+
+    <div class="main-container">
+
+        <!-- ========================================= -->
+        <!-- LEFT PANEL -->
+        <!-- ========================================= -->
+
+        <div class="input-box">
+
+            <div class="banner">
+
+                🌾 AI Crop Yield Prediction System
+
+                <p>
+                    Machine Learning based Agricultural Decision Support
+                </p>
+
+            </div>
+
+            <form action="/predict" method="POST">
+
+                <!-- Area -->
+
+                <label>📍 Area</label>
+
+                <select name="area">
+
+                    {% for area in areas %}
+
+                    <option value="{{ area }}"
+                    {% if selected_area==area %}
+                    selected
+                    {% endif %}>
+
+                        {{ area }}
+
+                    </option>
+
+                    {% endfor %}
+
+                </select>
+
+                <!-- Crop -->
+
+                <label>🌱 Crop</label>
+
+                <select name="item">
+
+                    {% for item in items %}
+
+                    <option value="{{ item }}"
+                    {% if selected_item==item %}
+                    selected
+                    {% endif %}>
+
+                        {{ item }}
+
+                    </option>
+
+                    {% endfor %}
+
+                </select>
+
+                <!-- Year -->
+
+                <label>📅 Year</label>
+
+                <input
+                    type="text"
+                    name="year"
+                    placeholder="2020"
+                    value="{{ year if year else '' }}"
+                    required>
+
+                <!-- Rainfall -->
+
+                <label>🌧 Average Rainfall (mm/year)</label>
+
+                <input
+                    type="text"
+                    name="rainfall"
+                    placeholder="1200"
+                    value="{{ rainfall if rainfall else '' }}"
+                    required>
+
+                <!-- Pesticides -->
+
+                <label>🧪 Pesticides (tonnes)</label>
+
+                <input
+                    type="text"
+                    name="pesticides"
+                    placeholder="150"
+                    value="{{ pesticides if pesticides else '' }}"
+                    required>
+
+                <!-- Temperature -->
+
+                <label>🌡 Average Temperature (°C)</label>
+
+                <input
+                    type="text"
+                    name="temperature"
+                    placeholder="25"
+                    value="{{ temperature if temperature else '' }}"
+                    required>
+
+                <!-- Buttons -->
+
+                <button type="submit">
+
+                    🌾 Predict Yield
+
+                </button>
+
+                <a href="/">
+
+                    <button
+                        type="button"
+                        class="reset-btn">
+
+                        🔄 Reset
+
+                    </button>
+
+                </a>
+
+            </form>
+
+        </div>
+
+        <!-- ========================================= -->
+        <!-- RIGHT PANEL -->
+        <!-- ========================================= -->
+
+        <div class="output-box">
+
+            {% if prediction %}
+
+            <div class="result">
+
+                <h2>
+
+                    Prediction Result
+
+                </h2>
+
+                <hr>
+
+                <table class="summary-table">
+
+                    <tr>
+
+                        <td><b>📍 Area</b></td>
+
+                        <td>{{ selected_area }}</td>
+
+                    </tr>
+
+                    <tr>
+
+                        <td><b>🌱 Crop</b></td>
+
+                        <td>{{ selected_item }}</td>
+
+                    </tr>
+
+                    <tr>
+
+                        <td><b>📅 Year</b></td>
+
+                        <td>{{ year }}</td>
+
+                    </tr>
+
+                    <tr>
+
+                        <td><b>🌧 Rainfall</b></td>
+
+                        <td>{{ rainfall }} mm/year</td>
+
+                    </tr>
+
+                    <tr>
+
+                        <td><b>🧪 Pesticides</b></td>
+
+                        <td>{{ pesticides }} tonnes</td>
+
+                    </tr>
+
+                    <tr>
+
+                        <td><b>🌡 Temperature</b></td>
+
+                        <td>{{ temperature }} °C</td>
+
+                    </tr>
+
+                </table>
+
+                <hr>
+
+                <h3>
+
+                    Estimated Yield
+
+                </h3>
+
+                <div class="yield-card">
+
+                    <div class="big-number">
+
+                        {{ prediction_tonnes }}
+
+                    </div>
+
+                    <div class="yield-unit">
+
+                        tonnes / hectare
+
+                    </div>
+
+                    <small>
+
+                        {{ prediction_hg }} hg/ha
+
+                    </small>
+
+                </div>
+
+                <div class="confidence-box">
+
+                    <h3>
+
+                        Prediction Confidence
+
+                    </h3>
+
+                    <div class="progress">
+
+                        <div class="progress-fill"
+                             style="width: {{ confidence }}%;">
+
+                            {{ confidence }}%
+                            
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <br>
+
+                <!-- Yield Level -->
+
+                {% if "Excellent" in level %}
+
+                <h2 class="excellent">
+
+                    {{ level }}
+
+                </h2>
+
+                {% elif "Good" in level %}
+
+                <h2 class="good">
+
+                    {{ level }}
+
+                </h2>
+
+                {% elif "Moderate" in level %}
+
+                <h2 class="moderate">
+
+                    {{ level }}
+
+                </h2>
+
+                {% else %}
+
+                <h2 class="low">
+
+                    {{ level }}
+
+                </h2>
+
+                {% endif %}
+
+                <hr>
+
+                <p class="footer">
+
+                    <b>Model Used :</b>
+
+                    {{ model_name }}
+
+                    <br><br>
+
+                    AI Based Crop Yield Prediction System
+
+                </p>
+
+            </div>
+
+            {% else %}
+
+            <div class="welcome">
+
+                <h2>
+
+                    🌾 Welcome
+
+                </h2>
+
+                <p>
+
+                    Fill all input values on the left panel and click
+                    <b>Predict Yield</b>.
+
+                </p>
+
+            </div>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
+    <!-- ========================================= -->
+    <!-- SMART RECOMMENDATION BOX -->
+    <!-- ========================================= -->
+
+    {% if prediction %}
+
+    <div class="recommendation-box">
+
+        <h2>
+
+            🌱 Smart Recommendations
+
+        </h2>
+
+        {% for rec in advice %}
+
+        <div class="tip">
+
+            ✅ {{ rec }}
+
+        </div>
+
+        {% endfor %}
+
+    </div>
+
+    {% endif %}
+
+</div>
+
+</body>
+
+</html>
