@@ -2,6 +2,8 @@ from flask import Flask, render_template, request
 import pandas as pd
 import joblib
 import os
+from flask import jsonify
+from weather import get_weather
 
 app = Flask(__name__)
 
@@ -43,7 +45,17 @@ def home():
         prediction=False
     )
 
+@app.route("/get_weather")
+def weather():
 
+    city = request.args.get("city")
+
+    data = get_weather(city)
+
+    if data is None:
+        return jsonify({"error": "City not found."})
+
+    return jsonify(data)
 # =====================================================
 # Predict
 # =====================================================
@@ -57,6 +69,7 @@ def predict():
     # Read the values
     area_name = request.form.get("area")
     crop_name = request.form.get("item")
+    city = request.form.get("city")
     year = request.form.get("year")
     rainfall = request.form.get("rainfall")
     pesticides = request.form.get("pesticides")
@@ -118,36 +131,58 @@ def predict():
 
     recommendations = []
 
-    if prediction_tonnes < 3:
+    risk_score = 0
 
-        level = "🔴 Low Yield"
+    # Rainfall
+    if rainfall < 500:
+        risk_score += 2
+    elif rainfall < 800:
+        risk_score += 1
+
+    # Temperature
+    if temperature < 15 or temperature > 35:
+        risk_score += 2
+    elif temperature < 18 or temperature > 32:
+        risk_score += 1
+
+    # Pesticides
+    if pesticides < 20:
+        risk_score += 2
+    elif pesticides < 50:
+        risk_score += 1
+
+    # Final decision
+
+    if prediction_tonnes < 3 or risk_score >= 5:
+
+        level = "🔴 Farming Conditions Poor"
 
         recommendations.append(
-            "Expected crop yield is low. Improve irrigation, soil fertility and fertilizer management."
+            "Crop yield is expected to be poor because environmental conditions are unfavorable."
         )
 
-    elif prediction_tonnes < 6:
+    elif prediction_tonnes < 6 or risk_score >= 3:
 
-        level = "🟡 Moderate Yield"
+        level = "🟡 Farming Conditions Moderate"
 
         recommendations.append(
-            "Yield is moderate. Better nutrient management and irrigation may improve production."
+            "Crop growth may be affected. Improve irrigation and crop management."
         )
 
     elif prediction_tonnes < 10:
 
-        level = "🟢 Good Yield"
+        level = "🟢 Good Farming Conditions"
 
         recommendations.append(
-            "Expected yield is good. Continue recommended farming practices."
+            "Expected crop yield is good. Continue recommended farming practices."
         )
 
     else:
 
-        level = "🌾 Excellent Yield"
+        level = "🌾 Excellent Farming Conditions"
 
         recommendations.append(
-            "Excellent expected yield. Maintain current farming practices."
+            "Environmental conditions are suitable for achieving high crop yield."
         )
 
     # =====================================================
