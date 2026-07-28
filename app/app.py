@@ -3,7 +3,7 @@ import pandas as pd
 import joblib
 import os
 from flask import jsonify
-from weather import get_weather
+from .weather import get_weather
 
 app = Flask(__name__)
 
