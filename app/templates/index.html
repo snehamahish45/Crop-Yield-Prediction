@@ -11,7 +11,7 @@
 
     <link rel="stylesheet"
           href="{{ url_for('static', filename='style.css') }}">
-
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
 <body>
@@ -67,14 +67,12 @@
 
                 <label>🌱 Crop</label>
 
-                <select name="item">
+                <select name="item" required>
 
                     {% for item in items %}
 
                     <option value="{{ item }}"
-                    {% if selected_item==item %}
-                    selected
-                    {% endif %}>
+                        {% if selected_item==item %}selected{% endif %}>
 
                         {{ item }}
 
@@ -400,7 +398,30 @@
                 </p>
 
             </div>
+            <hr>
+            
+                        <div class="info-card">
+                <h3>🌾 Recommended Crop</h3>
 
+                <p>{{recommended_crop}}</p>
+
+            </div>
+
+            <div class="info-card">
+
+            <h3>🧪 Fertilizer Recommendation</h3>
+
+            <p>{{fertilizer}}</p>
+
+            </div>
+
+            <div class="info-card">
+
+            <h3>🦠 Disease Alert</h3>
+
+            <p>{{disease}}</p>
+
+            </div>
             {% else %}
 
             <div class="welcome">
@@ -421,7 +442,64 @@
         </div>
 
     </div>
+        {% if prediction %}
 
+    <div class="yield-trend-box">
+
+        <h2>📈 Yield Trend Analysis</h2>
+
+        <div class="chart-box">
+            <canvas id="yieldChart"></canvas>
+        </div>
+
+        <div class="trend-note">
+
+            <h4>Prediction Summary</h4>
+
+            <p>
+                The graph compares historical crop yield values with the AI-predicted
+                yield for the selected crop and environmental conditions. It helps farmers understand
+                whether productivity is improving or declining and supports better agricultural planning.
+            </p>
+
+        </div>
+
+    </div>
+
+{% endif %}
+    
+    {% if forecast %}
+
+    <div class="forecast-container">
+
+        <h2>☁ 5-Day Weather Forecast</h2>
+
+        <div class="forecast-list">
+
+            {% for day in forecast %}
+
+            <div class="forecast-card">
+
+                <h4>{{ day.date }}</h4>
+
+                <img
+                    src="https://openweathermap.org/img/wn/{{ day.icon }}@2x.png"
+                    alt="{{ day.condition }}"
+                    class="forecast-icon">
+
+                <p><strong>{{ day.temp }} °C</strong></p>
+
+                <p>{{ day.condition }}</p>
+
+            </div>
+
+            {% endfor %}
+
+        </div>
+
+    </div>
+
+    {% endif %}
     <!-- ========================================= -->
     <!-- SMART RECOMMENDATION BOX -->
     <!-- ========================================= -->
@@ -506,6 +584,60 @@ function getWeather() {
         console.log(error);
 
     });
+
+}
+
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+
+const ctx=document.getElementById('yieldChart');
+
+if(ctx){
+
+new Chart(ctx,{
+
+type:'line',
+
+data:{
+
+labels:[
+'2021',
+'2022',
+'2023',
+'2024',
+'2025',
+'Prediction'
+],
+
+datasets:[{
+
+label:'Yield',
+
+data:[
+7.5,
+8.4,
+9.0,
+10.2,
+11.1,
+{{ prediction_tonnes if prediction else 0 }}
+],
+
+borderColor:'green',
+
+backgroundColor:'rgba(34,197,94,.2)',
+
+fill:true,
+
+tension:.4
+
+}]
+
+}
+
+});
 
 }
 

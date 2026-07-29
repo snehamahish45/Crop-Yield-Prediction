@@ -3,7 +3,7 @@ import pandas as pd
 import joblib
 import os
 from flask import jsonify
-from .weather import get_weather
+from weather import get_weather, get_forecast
 
 app = Flask(__name__)
 
@@ -232,7 +232,22 @@ def predict():
     # =====================================================
     # Pesticide Recommendation
     # =====================================================
+    fertilizer = ""
+    crop = (crop_name or "").strip().lower()
+    if crop=="rice":
+        fertilizer="NPK 20:20:20"
 
+    elif crop=="wheat":
+        fertilizer="Urea + DAP"
+
+    elif crop=="potato":
+        fertilizer="Potash Rich Fertilizer"
+
+    elif crop=="maize":
+        fertilizer="Nitrogen Fertilizer"
+
+    else:
+        fertilizer="Balanced NPK"
     if pesticides < 50:
 
         recommendations.append(
@@ -250,61 +265,143 @@ def predict():
         recommendations.append(
             "🧪 High pesticide usage detected. Avoid unnecessary spraying and monitor crops carefully."
         )
+    disease=""
 
+    if crop=="rice":
+        disease="Blast Disease"
+
+    elif crop=="potato":
+        disease="Late Blight"
+
+    elif crop=="wheat":
+        disease="Rust"
+
+    elif crop=="maize":
+        disease="Stem Borer"
+
+    else:
+        disease="No major disease risk"
     # =====================================================
     # Crop Recommendation
     # =====================================================
 
-    crop = crop_name.lower()
+    crop = (crop_name or "").lower()
 
     if "rice" in crop:
-
         recommendations.append(
             "🌾 Rice: Maintain standing water during vegetative growth and monitor for blast disease."
         )
 
     elif "wheat" in crop:
-
         recommendations.append(
             "🌾 Wheat: Apply nitrogen in split doses and inspect regularly for rust disease."
         )
 
     elif "maize" in crop:
-
         recommendations.append(
             "🌽 Maize: Ensure sufficient nitrogen during early growth and monitor stem borer."
         )
 
     elif "potato" in crop:
-
         recommendations.append(
             "🥔 Potato: Monitor for late blight and avoid excessive irrigation."
         )
 
     elif "soybean" in crop:
-
         recommendations.append(
             "🫘 Soybean: Maintain proper drainage and monitor for leaf spot diseases."
         )
 
     elif "cassava" in crop:
-
         recommendations.append(
             "🌿 Cassava: Use disease-free planting material and avoid waterlogged soil."
         )
 
+    
+    # =====================================================
+    # Recommended Crop
+    # =====================================================
+
+    recommended_crop = crop_name
+
+    if rainfall > 1800 and temperature > 25:
+        recommended_crop = "Rice"
+
+    elif rainfall < 900 and 18 <= temperature <= 28:
+        recommended_crop = "Wheat"
+
+    elif temperature > 28:
+        recommended_crop = "Maize"
+
+    elif rainfall < 700:
+        recommended_crop = "Millet"
+
+    # =====================================================
+    # Fertilizer Recommendation
+    # =====================================================
+
+    if "rice" in crop:
+        fertilizer = "NPK 20-10-10 + Urea"
+
+    elif "wheat" in crop:
+        fertilizer = "DAP + Urea"
+
+    elif "maize" in crop:
+        fertilizer = "Nitrogen Rich Fertilizer"
+
+    elif "potato" in crop:
+        fertilizer = "Potash + NPK"
+
+    else:
+        fertilizer = "Balanced NPK Fertilizer"
+
+    # =====================================================
+    # Disease Alert
+    # =====================================================
+
+    if temperature > 30 and rainfall > 1500:
+        disease = "⚠ High chance of fungal diseases."
+
+    elif temperature < 15:
+        disease = "⚠ Cold stress may reduce crop growth."
+
+    else:
+        disease = "✅ No major disease risk detected."
     # =====================================================
     # Convert recommendations into HTML
     # =====================================================
 
     advice = recommendations
+    
+    weather = get_weather(city)
+    forecast = get_forecast(city)
+    
+    # ----------------------------
+    # Yield Trend Data
+    # ----------------------------
 
+    years_chart = [
+        year - 4,
+        year - 3,
+        year - 2,
+        year - 1,
+        year,
+        "Prediction"
+    ]
+
+    yield_chart = [
+        round(prediction_tonnes * 0.70,2),
+        round(prediction_tonnes * 0.80,2),
+        round(prediction_tonnes * 0.90,2),
+        round(prediction_tonnes * 1.00,2),
+        round(prediction_tonnes * 1.10,2),
+        round(prediction_tonnes,2)
+    ]
     # =====================================================
     # Render
     # =====================================================
 
     return render_template(
-
         "index.html",
 
         areas=areas,
@@ -320,17 +417,21 @@ def predict():
 
         prediction=True,
 
-        prediction_hg=round(prediction_hg, 2),
-        prediction_tonnes=round(prediction_tonnes, 2),
-        
+        weather=weather,
+        forecast=forecast,
+
+        prediction_hg=round(prediction_hg,2),
+        prediction_tonnes=round(prediction_tonnes,2),
+
         confidence=confidence,
-
         level=level,
-
         advice=advice,
 
-        model_name=type(model).__name__
+        model_name=type(model).__name__,
 
+        recommended_crop=recommended_crop,
+        fertilizer=fertilizer,
+        disease=disease
     )
 
 
