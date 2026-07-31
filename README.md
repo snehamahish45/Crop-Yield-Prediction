@@ -393,38 +393,6 @@ https://your-render-url.onrender.com
 
 ---
 
-# 📸 Screenshots
-
-## 🏠 Home Page
-
-> Add screenshot here
-
-```
-screenshots/home.png
-```
-
----
-
-## 🌾 Crop Yield Prediction
-
-> Add screenshot here
-
-```
-screenshots/prediction.png
-```
-
----
-
-## 🤖 AI Farming Assistant
-
-> Add screenshot here
-
-```
-screenshots/chatbot.png
-```
-
----
-
 # 🧠 Machine Learning Workflow
 
 ```
