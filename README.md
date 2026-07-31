@@ -50,35 +50,6 @@ This project demonstrates practical implementation of **Machine Learning, API In
 https://crop-yield-prediction-1-7abv.onrender.com
 ```
 
----
-
-# 📸 Screenshots
-
-## 🏠 Home Page
-
-
-```
-<img width="1920" height="1766" alt="image" src="https://github.com/user-attachments/assets/195c70b5-f56e-4fcc-b579-16b791ca521e" />
-
-```
-
----
-
-## 🌾 Crop Yield Prediction
-
-```
-<img width="1920" height="4315" alt="image" src="https://github.com/user-attachments/assets/862d972a-0c04-4e60-a2ff-416512aa371c" />
-
-```
-
----
-
-## 🤖 AI Farming Assistant
-
-```
-<img width="450" height="683" alt="Screenshot 2026-07-31 132905" src="https://github.com/user-attachments/assets/abf0e434-32a6-4608-b997-77a3bf2f5081" />
-
-```
 
 ---
 
