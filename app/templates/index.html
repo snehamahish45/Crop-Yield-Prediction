@@ -60,7 +60,7 @@
                     </option>
 
                     {% endfor %}
-
+                
                 </select>
 
                 <!-- Crop -->
@@ -211,7 +211,7 @@
                     🌾 Predict Yield
 
                 </button>
-
+                
                 <a href="/">
 
                     <button
@@ -354,7 +354,24 @@
                 
 
                 <br>
+                <h2 class="section-heading">⚠ AI Risk Score</h2>
 
+                <div class="risk-card">
+
+                    <div class="risk-circle">
+                        {{ risk_percent }}%
+                    </div>
+
+                    <h3>{{ risk_level }} Risk</h3>
+
+                    <p>
+                        Estimated probability of crop failure based on
+                        weather, rainfall, temperature and pesticide usage.
+                    </p>
+
+                </div>
+
+                
                 <!-- Yield Level -->
 
                 {% if "Excellent" in level %}
@@ -393,35 +410,17 @@
 
                 <hr>
 
-                <p class="footer">
+                
+
+
+
+<p class="footer">
                     AI Crop Yield Prediction System • Flask • Random Forest • Weather API
                 </p>
 
             </div>
             <hr>
             
-                        <div class="info-card">
-                <h3>🌾 Recommended Crop</h3>
-
-                <p>{{recommended_crop}}</p>
-
-            </div>
-
-            <div class="info-card">
-
-            <h3>🧪 Fertilizer Recommendation</h3>
-
-            <p>{{fertilizer}}</p>
-
-            </div>
-
-            <div class="info-card">
-
-            <h3>🦠 Disease Alert</h3>
-
-            <p>{{disease}}</p>
-
-            </div>
             {% else %}
 
             <div class="welcome">
@@ -440,6 +439,80 @@
             {% endif %}
 
         </div>
+    
+    
+    </div>
+
+    {% if prediction %}
+
+    <div class="recommendation-container">
+
+        <div class="crop-container">
+
+            <h2>🌾 Best Crop Recommendation</h2>
+
+            <div class="best-crop-box">
+
+                {% for crop in best_crops %}
+
+                <div class="crop-card">
+
+                    {% if loop.index == 1 %}
+                    🥇
+                    {% elif loop.index == 2 %}
+                    🥈
+                    {% else %}
+                    🥉
+                    {% endif %}
+
+                    <h3>{{ crop.crop }}</h3>
+
+                    <p>
+                        Expected Yield<br>
+                        <strong>{{ crop.yield }} t/ha</strong>
+                    </p>
+
+                </div>
+
+                {% endfor %}
+
+            </div>
+
+        </div>
+
+        <div class="info-container">
+
+            <div class="info-card">
+                <h3>🌾 Recommended Crop</h3>
+                <p>{{ recommended_crop }}</p>
+            </div>
+
+            <div class="info-card">
+                <h3>🧪 Fertilizer Recommendation</h3>
+                <p>{{ fertilizer }}</p>
+            </div>
+
+            <div class="info-card">
+                <h3>🦠 Disease Alert</h3>
+                <p>{{ disease }}</p>
+            </div>
+
+        </div>
+
+    </div>
+
+    {% endif %}
+
+    <div class="recommendation-box">
+        <h2>
+            🧠 Smart AI Farming Recommendations
+        </h2>
+        {% for rec in advice %}
+        <div class="tip">
+            ✅ {{ rec }}
+        </div>
+        {% endfor %}
+    </div>
 
     </div>
         {% if prediction %}
@@ -466,6 +539,8 @@
 
     </div>
 
+    
+
 {% endif %}
     
     {% if forecast %}
@@ -477,7 +552,6 @@
         <div class="forecast-list">
 
             {% for day in forecast %}
-
             <div class="forecast-card">
 
                 <h4>{{ day.date }}</h4>
@@ -488,12 +562,34 @@
                     class="forecast-icon">
 
                 <p><strong>{{ day.temp }} °C</strong></p>
-
                 <p>{{ day.condition }}</p>
 
             </div>
-
             {% endfor %}
+
+        </div>
+
+        <!-- WEATHER ALERTS INSIDE SAME CONTAINER -->
+
+        <div class="weather-alert-section">
+
+            <h3>⚠ Weather Alerts</h3>
+
+            {% if alerts %}
+
+                {% for alert in alerts %}
+                    <div class="alert-card">
+                        {{ alert }}
+                    </div>
+                {% endfor %}
+
+            {% else %}
+
+                <div class="alert-card success-alert">
+                    ✅ No weather alerts.
+                </div>
+
+            {% endif %}
 
         </div>
 
@@ -506,26 +602,7 @@
 
     {% if prediction %}
 
-    <div class="recommendation-box">
-
-        <h2>
-
-            🧠 Smart AI Farming Recommendations
-
-
-        </h2>
-
-        {% for rec in advice %}
-
-        <div class="tip">
-
-            ✅ {{ rec }}
-
-        </div>
-
-        {% endfor %}
-
-    </div>
+    
 
     {% endif %}
 
@@ -593,45 +670,31 @@ function getWeather() {
 
 <script>
 
-const ctx=document.getElementById('yieldChart');
+const ctx = document.getElementById('yieldChart');
 
-if(ctx){
+if (ctx) {
 
-new Chart(ctx,{
+new Chart(ctx, {
 
-type:'line',
+type: 'line',
 
-data:{
+data: {
 
-labels:[
-'2021',
-'2022',
-'2023',
-'2024',
-'2025',
-'Prediction'
-],
+labels: {{ years_chart | tojson }},
 
-datasets:[{
+datasets: [{
 
-label:'Yield',
+label: 'Yield',
 
-data:[
-7.5,
-8.4,
-9.0,
-10.2,
-11.1,
-{{ prediction_tonnes if prediction else 0 }}
-],
+data: {{ yield_chart | tojson }},
 
-borderColor:'green',
+borderColor: 'green',
 
-backgroundColor:'rgba(34,197,94,.2)',
+backgroundColor: 'rgba(34,197,94,.2)',
 
-fill:true,
+fill: true,
 
-tension:.4
+tension: .4
 
 }]
 
@@ -641,6 +704,85 @@ tension:.4
 
 }
 
+</script>
+
+<div id="chatbot">
+
+<button id="chatBtn">
+
+🤖 Ask AI
+
+</button>
+
+<div id="chatWindow">
+
+<div id="messages">
+
+Hello 👋
+
+Ask me anything.
+
+</div>
+
+<input
+type="text"
+id="question"
+placeholder="Ask a farming question...">
+
+<button id="sendBtn">
+
+Send
+
+</button>
+
+</div>
+
+</div>
+
+
+<script>
+
+document.getElementById("sendBtn").onclick = function () {
+
+    const question = document.getElementById("question").value;
+
+    fetch("/chat", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            question: question
+        })
+    })
+
+    .then(response => response.json())
+
+    .then(data => {
+
+        document.getElementById("messages").innerHTML +=
+            "<br><b>You:</b> " + question +
+            "<br><b>AI:</b> " + data.answer + "<br><br>";
+
+        document.getElementById("question").value = "";
+
+    });
+
+}
+
+</script>
+
+<script>
+const chatBtn = document.getElementById("chatBtn");
+const chatWindow = document.getElementById("chatWindow");
+
+chatBtn.addEventListener("click", () => {
+    if(chatWindow.style.display === "block"){
+        chatWindow.style.display = "none";
+    } else {
+        chatWindow.style.display = "block";
+    }
+});
 </script>
 
 </body>

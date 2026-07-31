@@ -3,7 +3,8 @@ import pandas as pd
 import joblib
 import os
 from flask import jsonify
-from app.weather import get_weather, get_forecast
+from .weather import get_weather, get_forecast
+from .chatbot import ask_ai
 
 app = Flask(__name__)
 
@@ -42,7 +43,13 @@ def home():
         "index.html",
         areas=areas,
         items=items,
-        prediction=False
+        prediction=False,
+        years_chart=[],
+        yield_chart=[],
+        forecast=[],
+        alerts=[],
+        advice=[],
+        best_crops=[]
     )
 
 @app.route("/get_weather")
@@ -118,7 +125,36 @@ def predict():
 
     prediction_hg = model.predict(sample)[0]
     prediction_tonnes = prediction_hg / 10000
+    
+    crop_scores = []
 
+    for crop in items:
+
+        crop_encoded = item_encoder.transform([crop])[0]
+
+        sample = pd.DataFrame({
+            "Area":[area],
+            "Item":[crop_encoded],
+            "Year":[year],
+            "average_rain_fall_mm_per_year":[rainfall],
+            "pesticides_tonnes":[pesticides],
+            "avg_temp":[temperature]
+        })
+
+        predicted = model.predict(sample)[0] / 10000
+
+        crop_scores.append({
+            "crop": crop,
+            "yield": round(predicted,2)
+        })
+
+    crop_scores = sorted(
+        crop_scores,
+        key=lambda x:x["yield"],
+        reverse=True
+    )
+
+    best_crops = crop_scores[:3]
     # -----------------------------------
     # Prediction Confidence
     # -----------------------------------
@@ -130,7 +166,6 @@ def predict():
     # =====================================================
 
     recommendations = []
-
     risk_score = 0
 
     # Rainfall
@@ -150,15 +185,28 @@ def predict():
         risk_score += 2
     elif pesticides < 50:
         risk_score += 1
+    
+    risk_percent = min(risk_score * 18,100)
 
-    # Final decision
+    if risk_percent < 30:
+        risk_level = "Low"
 
-    if prediction_tonnes < 3 or risk_score >= 5:
+    elif risk_percent < 60:
+        risk_level = "Moderate"
+
+    else:
+        risk_level = "High"
+        
+    # =====================================================
+    # Farming Condition
+    # =====================================================
+
+    if prediction_tonnes < 3 and risk_score >= 3:
 
         level = "🔴 Farming Conditions Poor"
 
         recommendations.append(
-            "Crop yield is expected to be poor because environmental conditions are unfavorable."
+            "Crop yield is expected to be poor because both predicted yield and environmental conditions are unfavorable."
         )
 
     elif prediction_tonnes < 6 or risk_score >= 3:
@@ -169,12 +217,12 @@ def predict():
             "Crop growth may be affected. Improve irrigation and crop management."
         )
 
-    elif prediction_tonnes < 10:
+    elif prediction_tonnes < 10 and risk_score < 3:
 
         level = "🟢 Good Farming Conditions"
 
         recommendations.append(
-            "Expected crop yield is good. Continue recommended farming practices."
+            "Expected crop yield is good under current environmental conditions."
         )
 
     else:
@@ -182,8 +230,10 @@ def predict():
         level = "🌾 Excellent Farming Conditions"
 
         recommendations.append(
-            "Environmental conditions are suitable for achieving high crop yield."
+            "Excellent environmental conditions are expected to produce a high crop yield."
         )
+
+    
 
     # =====================================================
     # Rainfall Recommendation
@@ -322,19 +372,7 @@ def predict():
     # Recommended Crop
     # =====================================================
 
-    recommended_crop = crop_name
-
-    if rainfall > 1800 and temperature > 25:
-        recommended_crop = "Rice"
-
-    elif rainfall < 900 and 18 <= temperature <= 28:
-        recommended_crop = "Wheat"
-
-    elif temperature > 28:
-        recommended_crop = "Maize"
-
-    elif rainfall < 700:
-        recommended_crop = "Millet"
+    recommended_crop = best_crops[0]["crop"]
 
     # =====================================================
     # Fertilizer Recommendation
@@ -426,15 +464,30 @@ def predict():
         confidence=confidence,
         level=level,
         advice=advice,
-
+        best_crops=best_crops,
+        years_chart=years_chart,
+        yield_chart=yield_chart,
         model_name=type(model).__name__,
 
         recommended_crop=recommended_crop,
         fertilizer=fertilizer,
-        disease=disease
+        disease=disease,
+        risk_percent=risk_percent,
+        risk_level=risk_level
     )
 
+@app.route("/chat", methods=["POST"])
+def chat():
 
+    data = request.get_json()
+
+    question = data.get("question")
+
+    answer = ask_ai(question)
+
+    return jsonify({
+        "answer": answer
+    })
 # =====================================================
 # Run
 # =====================================================
